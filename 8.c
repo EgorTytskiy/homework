@@ -38,71 +38,71 @@ int main(void) {
 #include <sys/ioctl.h>
 #include <linux/fiemap.h>
 //---------------------------------------------------------------
-#define FIBMAP	   _IO(0x00,1)	/* bmap access */
-#define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
-#define EXT4_EXTENTS_FL			0x00080000 /* Inode uses extents */
-#define	EXT3_IOC_GETFLAGS		_IOR('f', 1, long)
+#define FIBMAP     _IO(0x00,1)  /* bmap access */
+#define FIGETBSZ   _IO(0x00,2)  /* get the block size used for bmap */
+#define EXT4_EXTENTS_FL         0x00080000 /* Inode uses extents */
+#define EXT3_IOC_GETFLAGS       _IOR('f', 1, long)
 
 static void frag_report(const char *filename)
 {
-	struct statfs	fsinfo;
+    struct statfs fsinfo;
 #ifdef HAVE_FSTAT64
-	struct stat64	fileinfo;
+    struct stat64 fileinfo;
 #else
-	struct stat	fileinfo;
+    struct stat fileinfo;
 #endif
-	int		bs;
-	int		fd;
-	unsigned long numblocks;
+    int bs;
+    int fd;
+    unsigned long numblocks;
 
-	if (statfs(filename, &fsinfo) < 0) {
-		perror("statfs");
-		return;
-	}
+    if (statfs(filename, &fsinfo) < 0) {
+        perror("statfs");
+        return;
+    }
 #ifdef HAVE_FSTAT64
-	if (stat64(filename, &fileinfo) < 0) {
+    if (stat64(filename, &fileinfo) < 0) {
 #else
-	if (stat(filename, &fileinfo) < 0) {
+    if (stat(filename, &fileinfo) < 0) {
 #endif
-		perror("stat");
-		return;
-	}
-	if (!S_ISREG(fileinfo.st_mode)) {
-		printf("%s: Not a regular file\n", filename);
-		return;
-	}
-	if ((fsinfo.f_type == 0xef51) || (fsinfo.f_type == 0xef52) || 
-	    (fsinfo.f_type == 0xef53))
+        perror("stat");
+        return;
+    }
+    if (!S_ISREG(fileinfo.st_mode)) {
+        printf("%s: Not a regular file\n", filename);
+        return;
+    }
+    if ((fsinfo.f_type == 0xef51) || (fsinfo.f_type == 0xef52) ||
+        (fsinfo.f_type == 0xef53))
     {
 
-		printf("Filesystem type is: %lx\n", 
-		       (unsigned long) fsinfo.f_type);
-	}
+        printf("Filesystem type is: %lx\n",
+               (unsigned long) fsinfo.f_type);
+    }
 
 #ifdef HAVE_OPEN64
-	fd = open64(filename, O_RDONLY);
+    fd = open64(filename, O_RDONLY);
 #else
-	fd = open(filename, O_RDONLY);
+    fd = open(filename, O_RDONLY);
 #endif
-	if (fd < 0) {
-		perror("open");
-		return;
-	}
-	if (ioctl(fd, FIGETBSZ, &bs) < 0) { /* FIGETBSZ takes an int */
-		perror("FIGETBSZ");
-		close(fd);
-		return;
-	}
+    if (fd < 0) {
+        perror("open");
+        return;
+    }
+    if (ioctl(fd, FIGETBSZ, &bs) < 0) { /* FIGETBSZ takes an int */
+        perror("FIGETBSZ");
+        close(fd);
+        return;
+    }
 
-	numblocks = ((size_t)fileinfo.st_size + ((unsigned)bs-1)) / (unsigned)bs;
+    numblocks = ((size_t)fileinfo.st_size + ((unsigned)bs-1)) / (unsigned)bs;
 
-	printf("File size of %s is %lld (%ld blocks of %d bytes)\n", filename, 
-		(long long) fileinfo.st_size, numblocks,bs);
+    printf("File size of %s is %lld (%ld blocks of %d bytes)\n", filename,
+        (long long) fileinfo.st_size, numblocks,bs);
 
-	
-	close(fd);
+
+    close(fd);
 }
- 
+
 void part2(const char *filename)
 {
     int fd = open (filename, O_RDONLY | O_NONBLOCK); //nonblock is advized by ioctl man
@@ -120,9 +120,9 @@ void part2(const char *filename)
         perror (NULL);
      return ;
     }
-    
+
     int blksize = 0;
-	ioctl (fd, FIGETBSZ, &blksize);
+    ioctl (fd, FIGETBSZ, &blksize);
 
     char buf[2048] = {0};
     struct fiemap *fiemap = (struct fiemap *) buf; // why that unobvious? becaue fm_extemts are not fiemap_extent * but fiemap_extent [0]! WHY? Bacause!
@@ -131,11 +131,11 @@ void part2(const char *filename)
     fiemap->fm_start = 0;
     char file_not_empty = 0, header_printed = 0;
 
-    while (1) {   
+    while (1) {
         if (ioctl (fd, FS_IOC_FIEMAP, fiemap) < 0) {
             perror ("ioctl failed to get fiemap");
             close (fd);
-            
+
         }
         if (fiemap->fm_mapped_extents)
             file_not_empty = 1;
@@ -159,20 +159,20 @@ void part2(const char *filename)
         fiemap->fm_start = fiemap->fm_extents[i-1].fe_logical + fiemap->fm_extents[i-1].fe_length;
     }
     close (fd);
-    
+
 }
 
 int main(int argc, char**argv)
-{ 
+{
     if (argc < 2) {
         printf ("Usage: %s <file>\n", argv[0]);
         return 2;
-    }  
+    }
     for (int i = 1; i < argc; i++) {
         frag_report(argv[i]);
         part2(argv[i]);
     }
-    
+
     return 0;
 }
 #endif
