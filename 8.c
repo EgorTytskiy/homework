@@ -55,11 +55,6 @@ static void frag_report(const char *filename)
 	int		fd;
 	unsigned long numblocks;
 
-
-
-	int		is_ext2 = 0;
-
-
 	if (statfs(filename, &fsinfo) < 0) {
 		perror("statfs");
 		return;
@@ -78,7 +73,6 @@ static void frag_report(const char *filename)
 	}
 	if ((fsinfo.f_type == 0xef51) || (fsinfo.f_type == 0xef52) || 
 	    (fsinfo.f_type == 0xef53))
-		is_ext2++;
     {
 
 		printf("Filesystem type is: %lx\n", 
@@ -100,37 +94,17 @@ static void frag_report(const char *filename)
 		return;
 	}
 
-	numblocks = ((size_t)fileinfo.st_size + ((unsigned long int)bs-1)) / (unsigned long int)bs;
-    {
+	numblocks = ((size_t)fileinfo.st_size + ((unsigned)bs-1)) / (unsigned)bs;
 
-		printf("File size of %s is %lld (%ld blocks of %d bytes)\n", filename, 
-		       (long long) fileinfo.st_size, numblocks,bs);
-
-	}
+	printf("File size of %s is %lld (%ld blocks of %d bytes)\n", filename, 
+		(long long) fileinfo.st_size, numblocks,bs);
 
 	
 	close(fd);
 }
-
-// static void usage(const char *progname)
-// {
-// 	fprintf(stderr, "Usage: %s [-v] file ...\n", progname);
-// 	exit(1);
-// }
-void part1(int argc, char**argv)
-{
-	for (int i = 1; i < argc; i++) {
-        frag_report(argv[i]);
-    }
-}
-//---------------------------------------------------
-
  
-void part2(int argc, char**argv)
+void part2(const char *filename)
 {
-int ret = 0;
-
-    char *filename = argv[argc - 1];
     int fd = open (filename, O_RDONLY | O_NONBLOCK); //nonblock is advized by ioctl man
     if (fd == -1) {
         perror (filename);
@@ -157,9 +131,8 @@ int ret = 0;
     fiemap->fm_start = 0;
     char file_not_empty = 0, header_printed = 0;
 
-    while (1) {
-        ret = ioctl (fd, FS_IOC_FIEMAP, fiemap);
-        if (ret < 0) {
+    while (1) {   
+        if (ioctl (fd, FS_IOC_FIEMAP, fiemap) < 0) {
             perror ("ioctl failed to get fiemap");
             close (fd);
             
@@ -195,14 +168,11 @@ int main(int argc, char**argv)
         printf ("Usage: %s <file>\n", argv[0]);
         return 2;
     }  
- part1(argc,argv);
- 
- //-----------------------------------------------------------------
- part2(argc,argv);
-
-
- //-----------------------------------------------------------------
- return 0;
-
+    for (int i = 1; i < argc; i++) {
+        frag_report(argv[i]);
+        part2(argv[i]);
+    }
+    
+    return 0;
 }
 #endif
