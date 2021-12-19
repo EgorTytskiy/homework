@@ -122,8 +122,11 @@ void part2(const char *filename)
     }
 
     int blksize = 0;
-    ioctl (fd, FIGETBSZ, &blksize);
-
+    if (ioctl (fd, FIGETBSZ, &blksize)< 0) {
+            perror ("ioctl failed to get fiemap");
+            close (fd);
+            return ;
+    }
     char buf[2048] = {0};
     struct fiemap *fiemap = (struct fiemap *) buf; // why that unobvious? becaue fm_extemts are not fiemap_extent * but fiemap_extent [0]! WHY? Bacause!
     fiemap->fm_extent_count = (sizeof (buf) - sizeof (*fiemap)) / sizeof (struct fiemap_extent);
@@ -135,7 +138,7 @@ void part2(const char *filename)
         if (ioctl (fd, FS_IOC_FIEMAP, fiemap) < 0) {
             perror ("ioctl failed to get fiemap");
             close (fd);
-
+            return ;
         }
         if (fiemap->fm_mapped_extents)
             file_not_empty = 1;
