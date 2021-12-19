@@ -204,23 +204,23 @@ void part2(int argc, char**argv)
 int ret = 0;
     if (argc < 2) {
         printf ("Usage: %s <file>\n", argv[0]);
-        return -2;
+        //return -2;
     }
     char *filename = argv[argc - 1];
     fdesc fd = open (filename, O_RDONLY | O_NONBLOCK); //nonblock is advized by ioctl man
     if (fd == -1) {
         perror (filename);
-        return -2;
+        //return -2;
     }
     struct stat st = {0};
     if (fstat (fd, &st)) {
         perror (filename);
-        return -2;
+        //return -2;
     }
     struct statfs st_fs = {0};
     if (fstatfs (fd, &st_fs)) {
         perror (NULL);
-        return -2;
+        //return -2;
     }
     //printf ("fs type code is: %lx\n", (unsigned long) st_fs.f_type);
     blksize_t blksize = 0;
@@ -243,7 +243,7 @@ int ret = 0;
         if (ret < 0) {
             perror ("ioctl failed to get fiemap");
             close (fd);
-            return -1;
+            //return -1;
         }
         if (fiemap->fm_mapped_extents)
             file_not_empty = 1;
